@@ -56,9 +56,6 @@ class BaseRunner(object):
         self.skip = False
         self.skip_cause = None
 
-    def raise_on_first_error(self):
-        return False
-
     @classmethod
     def is_refable(cls, node):
         return node.resource_type in NodeType.refable()
@@ -241,9 +238,6 @@ class BaseRunner(object):
 class CompileRunner(BaseRunner):
     print_header = False
 
-    def raise_on_first_error(self):
-        return True
-
     def before_execute(self):
         pass
 
@@ -314,9 +308,6 @@ class CompileRunner(BaseRunner):
 
 
 class ModelRunner(CompileRunner):
-
-    def raise_on_first_error(self):
-        return False
 
     @classmethod
     def run_hooks(cls, config, adapter, manifest, hook_type, extra_context):
@@ -472,9 +463,6 @@ class ModelRunner(CompileRunner):
 
 class TestRunner(CompileRunner):
 
-    def raise_on_first_error(self):
-        return False
-
     def describe_node(self):
         node_name = self.node.name
         return "test {}".format(node_name)
@@ -518,9 +506,6 @@ class TestRunner(CompileRunner):
 
 
 class ArchiveRunner(ModelRunner):
-
-    def raise_on_first_error(self):
-        return False
 
     def describe_node(self):
         cfg = self.node.get('config', {})

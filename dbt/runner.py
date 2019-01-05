@@ -81,9 +81,6 @@ class RunManager(object):
         if not runner.is_ephemeral_model(runner.node):
             runner.after_execute(result)
 
-        if result.errored and runner.raise_on_first_error():
-            raise dbt.exceptions.RuntimeException(result.error)
-
         return result
 
     def _submit(self, pool, args, callback):

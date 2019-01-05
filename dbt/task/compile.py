@@ -20,6 +20,9 @@ class CompileTask(RunnableTask):
         }
         results = RunManager(self.config, query, CompileRunner).run()
 
-        dbt.ui.printer.print_timestamped_line('Done.')
+        if results:
+            dbt.ui.printer.print_run_end_messages(results)
+        else:
+            dbt.ui.printer.print_timestamped_line('Done.')
 
         return results
