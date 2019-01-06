@@ -13,6 +13,7 @@ import dbt.task.compile as compile_task
 import dbt.task.debug as debug_task
 import dbt.task.clean as clean_task
 import dbt.task.deps as deps_task
+import dbt.task.compare as compare_task
 import dbt.task.init as init_task
 import dbt.task.seed as seed_task
 import dbt.task.test as test_task
@@ -440,6 +441,13 @@ def parse_args(args):
         "listed in packages.yml")
     sub.set_defaults(cls=deps_task.DepsTask, which='deps')
 
+    compare_sub = subs.add_parser(
+        'compare',
+        parents=[base_subparser],
+        help="Compare your project specifications against what's in "
+        "the database.")
+    compare_sub.set_defaults(cls=compare_task.CompareTask, which='compare')
+
     sub = subs.add_parser(
         'archive',
         parents=[base_subparser],
@@ -489,7 +497,7 @@ def parse_args(args):
         help='Do not run "dbt compile" as part of docs generation'
     )
 
-    for sub in [run_sub, compile_sub, generate_sub]:
+    for sub in [run_sub, compile_sub, generate_sub, compare_sub]:
         sub.add_argument(
             '-m',
             '--models',
