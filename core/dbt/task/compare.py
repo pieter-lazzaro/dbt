@@ -5,11 +5,12 @@ from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.runner import RunManager
 from dbt.node_types import NodeType
 from dbt.node_runners import ModelRunner
+from dbt.utils import is_enabled
 
 import dbt.ui.printer
-from dbt.task.compile import CompileTask
+from dbt.task.base_task import BaseTask
 
-class CompareTask(CompileTask):
+class CompareTask(BaseTask):
     def _get_manifest(self):
         compiler = dbt.compilation.Compiler(self.config)
         compiler.initialize()
@@ -30,20 +31,17 @@ class CompareTask(CompileTask):
         used_relations = []
         for node in manifest.nodes.items():
             node = node[1].to_dict()
-            if node['resource_type'] == 'model' and node['config']['enabled']:
+            if node['resource_type'] in NodeType.refable() and is_enabled(node):
                 used_relations.append("%s.%s" % (node['schema'], node['alias']))
 
         # Look up all of the relations in the DB
         adapter = get_adapter(self.config)
-        results = adapter.get_unfiltered_catalog(manifest)
+        results = adapter.get_catalog(manifest)
 
         results = [
             dict(zip(results.column_names, row))
             for row in results
         ]
-
-        # Filter down to only schemas we know about
-        results = [x for x in results if x['table_schema'] in used_schemas]
 
         existing_relations = {}
         for x in results:

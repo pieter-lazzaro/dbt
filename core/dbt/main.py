@@ -444,7 +444,7 @@ def parse_args(args):
     compare_sub = subs.add_parser(
         'compare',
         parents=[base_subparser],
-        help="Compare your project specifications against what's in "
+        help="Compare your project specifications with what's in "
         "the database.")
     compare_sub.set_defaults(cls=compare_task.CompareTask, which='compare')
 
@@ -497,7 +497,7 @@ def parse_args(args):
         help='Do not run "dbt compile" as part of docs generation'
     )
 
-    for sub in [run_sub, compile_sub, generate_sub, compare_sub]:
+    for sub in [run_sub, compile_sub, generate_sub]:
         sub.add_argument(
             '-m',
             '--models',

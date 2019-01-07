@@ -687,18 +687,6 @@ class BaseAdapter(object):
         """
         return table.where(_catalog_filter_schemas(manifest))
 
-    def get_unfiltered_catalog(self, manifest):
-        """Get the catalog for all tables by running the get catalog macro.
-        Returns an agate.Table of catalog information.
-        NOT limited to relations in this manifest
-        """
-        try:
-            table = self.execute_macro(manifest, GET_CATALOG_MACRO_NAME)
-        finally:
-            self.release_connection(GET_CATALOG_MACRO_NAME)
-
-        return table
-
     def get_catalog(self, manifest):
         """Get the catalog for this manifest by running the get catalog macro.
         Returns an agate.Table of catalog information.
