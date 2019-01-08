@@ -20,7 +20,7 @@ class TestConfigs(DBTIntegrationTest):
     def create_test_model(self, materialization):
         model = """
             {{{{ config(materialized='{mat}') }}}}
-            SELECT 1
+            SELECT 1 AS colname
             """.format(mat=materialization)
 
         with open(self.dir("models/test_view.sql"), "w") as f:

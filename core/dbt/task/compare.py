@@ -10,6 +10,7 @@ from dbt.utils import is_enabled as check_is_enabled
 import dbt.ui.printer
 from dbt.task.base_task import BaseTask
 
+
 class CompareTask(BaseTask):
     def _get_manifest(self):
         compiler = dbt.compilation.Compiler(self.config)
@@ -22,7 +23,9 @@ class CompareTask(BaseTask):
 
     def run(self):
 
-        logger.info('dbt compare: Comparing local codebase to catalog in data warehouse.')
+        logger.info(
+            "dbt compare: Comparing local codebase to catalog in data warehouse."
+        )
 
         manifest = self._get_manifest()
 
@@ -31,42 +34,44 @@ class CompareTask(BaseTask):
         used_relations = []
         for node in manifest.nodes.items():
             node = node[1].to_dict()
-            is_refable = node['resource_type'] in NodeType.refable()
+            is_refable = node["resource_type"] in NodeType.refable()
             is_enabled = check_is_enabled(node)
-            is_ephemeral = node['config']['materialized'] == 'ephemeral'
+            is_ephemeral = node["config"]["materialized"] == "ephemeral"
             if is_refable and is_enabled and not is_ephemeral:
-                used_relations.append("%s.%s" % (node['schema'], node['alias']))
+                used_relations.append(
+                    "%s.%s" % (node["schema"].lower(), node["alias"].lower())
+                )
 
         # Look up all of the relations in the DB
         adapter = get_adapter(self.config)
         results = adapter.get_catalog(manifest)
 
-        results = [
-            dict(zip(results.column_names, row))
-            for row in results
-        ]
+        results = [dict(zip(results.column_names, row)) for row in results]
 
         existing_relations = {}
         for x in results:
-            name = "%s.%s" % (x['table_schema'], x['table_name'])
-            existing_relations[name] = x['table_type']
+            name = "%s.%s" % (x["table_schema"], x["table_name"])
+            existing_relations[name] = x["table_type"]
 
         problems = {}
-        for k,v in existing_relations.items():
-            if k not in used_relations:
+        for k, v in existing_relations.items():
+            if k.lower() not in used_relations:
                 problems[k] = v
 
         if len(problems) == 0:
             logger.info("All clear! The catalog matches the manifest.")
         else:
-            logger.info("-"*40)
-            logger.info("Warning: We found some discrepancies between the database catalog and the dbt manifest:")
-            logger.info("This may indicate that you have outdated relations in your warehouse that can be removed.")
-            logger.info("-"*40)
+            logger.info("-" * 40)
+            logger.info(
+                "Warning: We found some discrepancies between the database catalog and the dbt manifest:"
+            )
+            logger.info(
+                "This may indicate that you have outdated relations in your warehouse that can be removed."
+            )
+            logger.info("-" * 40)
 
-
-        for k,v in problems.items():
+        for k, v in problems.items():
             logger.info("%s: %s" % (k, v))
-            logger.info("-"*40)
+            logger.info("-" * 40)
 
         return problems
