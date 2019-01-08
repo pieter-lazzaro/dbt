@@ -1,7 +1,7 @@
 from test.integration.base import DBTIntegrationTest, use_profile
 
-class TestConfigs(DBTIntegrationTest):
 
+class TestConfigs(DBTIntegrationTest):
     @property
     def schema(self):
         return "config_040"
@@ -21,32 +21,42 @@ class TestConfigs(DBTIntegrationTest):
         model = """
             {{{{ config(materialized='{mat}') }}}}
             SELECT 1 AS colname
-            """.format(mat=materialization)
+            """.format(
+            mat=materialization
+        )
 
         with open(self.dir("models/test_view.sql"), "w") as f:
             f.write(model)
 
+    def get_created_models(self):
+        created_models = self.get_models_in_schema()
+        created_models = dict((k.lower(), v) for k,v in created_models.items())
+
+        return created_models
+
     def compare_switch_to_ephemeral(self):
 
         # Run dbt with test_view as a view
-        self.create_test_model('view')
-        self.run_dbt(['run'])
+        self.create_test_model("view")
+        self.run_dbt(["run"])
 
         # Assert the view exists in the database
-        created_models = self.get_models_in_schema()
-        self.assertTrue('test_view' in created_models)
-        self.assertTrue('downstream' in created_models)
+        created_models = self.get_created_models()
+
+        self.assertTrue("test_view" in created_models)
+        self.assertTrue("downstream" in created_models)
 
         # Assert dbt compare passes
         results = self.run_dbt(["compare"])
         self.assertTrue(len(results) == 0)
 
         # Run dbt with test_view as ephemeral
-        self.create_test_model('ephemeral')
-        self.run_dbt(['run'])
+        self.create_test_model("ephemeral")
+        self.run_dbt(["run"])
         # Assert the view still exists in the database
-        self.assertTrue('test_view' in created_models)
-        self.assertTrue('downstream' in created_models)
+        created_models = self.get_created_models()
+        self.assertTrue("test_view" in created_models)
+        self.assertTrue("downstream" in created_models)
         # Assert dbt compare fails
         results = self.run_dbt(["compare"])
         self.assertTrue(len(results) == 1)
