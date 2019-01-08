@@ -5,7 +5,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.runner import RunManager
 from dbt.node_types import NodeType
 from dbt.node_runners import ModelRunner
-from dbt.utils import is_enabled
+from dbt.utils import is_enabled as check_is_enabled
 
 import dbt.ui.printer
 from dbt.task.base_task import BaseTask
@@ -31,7 +31,10 @@ class CompareTask(BaseTask):
         used_relations = []
         for node in manifest.nodes.items():
             node = node[1].to_dict()
-            if node['resource_type'] in NodeType.refable() and is_enabled(node):
+            is_refable = node['resource_type'] in NodeType.refable()
+            is_enabled = check_is_enabled(node)
+            is_ephemeral = node['config']['materialized'] == 'ephemeral'
+            if is_refable and is_enabled and not is_ephemeral:
                 used_relations.append("%s.%s" % (node['schema'], node['alias']))
 
         # Look up all of the relations in the DB
