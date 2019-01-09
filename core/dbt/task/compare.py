@@ -30,17 +30,15 @@ class CompareTask(BaseTask):
         manifest = self._get_manifest()
 
         # Look up all of the relations dbt knows about
-        used_schemas = manifest.get_used_schemas()
-        used_relations = []
-        for node in manifest.nodes.items():
-            node = node[1].to_dict()
+        model_relations = set()
+        for node in manifest.nodes.values():
+            node = node.to_dict()
             is_refable = node["resource_type"] in NodeType.refable()
             is_enabled = check_is_enabled(node)
             is_ephemeral = node["config"]["materialized"] == "ephemeral"
             if is_refable and is_enabled and not is_ephemeral:
-                used_relations.append(
-                    "%s.%s" % (node["schema"].lower(), node["alias"].lower())
-                )
+                rel = (node["schema"], node["alias"])
+                model_relations.add(rel)
 
         # Look up all of the relations in the DB
         adapter = get_adapter(self.config)
@@ -48,30 +46,37 @@ class CompareTask(BaseTask):
 
         results = [dict(zip(results.column_names, row)) for row in results]
 
-        existing_relations = {}
-        for x in results:
-            name = "%s.%s" % (x["table_schema"], x["table_name"])
-            existing_relations[name] = x["table_type"]
+        database_relations = set()
+        for row in results:
+            rel = (row["table_schema"], row["table_name"])
+            database_relations.add(rel)
 
-        problems = {}
-        for k, v in existing_relations.items():
-            if k.lower() not in used_relations:
-                problems[k] = v
+        checked_schemas = set([x[0] for x in database_relations])
+
+        logger.info("-" * 40)
+        logger.info("dbt compare reviewed the following schemas:")
+        for schema_name in checked_schemas:
+            logger.info(schema_name)
+        logger.info("-" * 40)
+
+        problems = database_relations - model_relations
 
         if len(problems) == 0:
-            logger.info("All clear! The catalog matches the manifest.")
+            logger.info(
+                "All clear! There are no relations in the checked schemas that are not defined in dbt models."
+            )
         else:
             logger.info("-" * 40)
             logger.info(
-                "Warning: We found some discrepancies between the database catalog and the dbt manifest:"
+                "Warning: We found some discrepancies between the database catalog and the dbt models:"
             )
             logger.info(
                 "This may indicate that you have outdated relations in your warehouse that can be removed."
             )
             logger.info("-" * 40)
 
-        for k, v in problems.items():
-            logger.info("%s: %s" % (k, v))
-            logger.info("-" * 40)
+        for relation in problems:
+            logger.info("DIFFERENCE: %s.%s" % (relation[0], relation[1]))
+        logger.info("-" * 40)
 
         return problems

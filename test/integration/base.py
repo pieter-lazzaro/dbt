@@ -479,11 +479,11 @@ class DBTIntegrationTest(unittest.TestCase):
                              else table_type
                         end as materialization
                 from information_schema.tables
-                where upper(table_schema) like '{}'
+                where table_schema ilike '{}'
                 order by table_name
                 """
 
-        result = self.run_sql(sql.format(schema.upper()), fetch='all')
+        result = self.run_sql(sql.format(schema), fetch='all')
 
         return {model_name: materialization for (model_name, materialization) in result}
 

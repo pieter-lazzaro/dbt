@@ -29,8 +29,8 @@ class TestConfigs(DBTIntegrationTest):
             f.write(model)
 
     def get_created_models(self):
-        created_models = self.get_models_in_schema()
-        created_models = dict((k.lower(), v) for k, v in created_models.items())
+        relations = self.adapter.list_relations_without_caching(self.unique_schema())
+        created_models = [rel.table.lower() for rel in relations]
 
         return created_models
 
@@ -48,6 +48,7 @@ class TestConfigs(DBTIntegrationTest):
 
         # Assert dbt compare passes
         results = self.run_dbt(["compare"])
+
         self.assertTrue(len(results) == 0)
 
         # Run dbt with test_view as ephemeral
