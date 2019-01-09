@@ -37,7 +37,7 @@ class CompareTask(BaseTask):
             is_enabled = check_is_enabled(node)
             is_ephemeral = node["config"]["materialized"] == "ephemeral"
             if is_refable and is_enabled and not is_ephemeral:
-                rel = (node["schema"], node["alias"])
+                rel = (node["schema"].lower(), node["alias"].lower())
                 model_relations.add(rel)
 
         # Look up all of the relations in the DB
@@ -48,7 +48,7 @@ class CompareTask(BaseTask):
 
         database_relations = set()
         for row in results:
-            rel = (row["table_schema"], row["table_name"])
+            rel = (row["table_schema"].lower(), row["table_name"].lower())
             database_relations.add(rel)
 
         checked_schemas = set([x[0] for x in database_relations])
