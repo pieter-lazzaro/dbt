@@ -30,7 +30,7 @@ class TestConfigs(DBTIntegrationTest):
 
     def get_created_models(self):
         created_models = self.get_models_in_schema()
-        created_models = dict((k.lower(), v) for k,v in created_models.items())
+        created_models = dict((k.lower(), v) for k, v in created_models.items())
 
         return created_models
 
