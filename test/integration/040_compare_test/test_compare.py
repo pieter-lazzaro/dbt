@@ -1,4 +1,5 @@
 from test.integration.base import DBTIntegrationTest, use_profile
+import os
 
 
 class TestConfigs(DBTIntegrationTest):
@@ -12,6 +13,9 @@ class TestConfigs(DBTIntegrationTest):
     @staticmethod
     def dir(path):
         return "test/integration/040_compare_test/" + path.lstrip("/")
+
+    def tearDown(self):
+        os.remove(self.dir("models/test_view.sql"))
 
     @property
     def models(self):
