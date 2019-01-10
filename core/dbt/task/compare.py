@@ -9,6 +9,7 @@ from dbt.utils import is_enabled as check_is_enabled
 
 import dbt.ui.printer
 from dbt.task.base_task import BaseTask
+import dbt.ui.printer
 
 
 class CompareTask(BaseTask):
@@ -23,11 +24,26 @@ class CompareTask(BaseTask):
 
     def run(self):
 
-        logger.info(
-            "dbt compare: Comparing local codebase to catalog in data warehouse."
-        )
-
+        # Look up all of the relations in the DB
+        adapter = get_adapter(self.config)
         manifest = self._get_manifest()
+
+        checked_schemas = manifest.get_used_schemas()
+
+        db_relations = []
+        for schema in checked_schemas:
+            db_relations.extend(adapter.list_relations(schema))
+
+        database_relations = set()
+        database_relations_map = dict()
+        for relation in db_relations:
+            relation_id = (relation.schema.lower(), relation.identifier.lower())
+            database_relations_map[relation_id] = relation
+            database_relations.add(relation_id)
+
+        logger.info("Comparing local models to the database catalog. Checking schemas:")
+        for schema_name in checked_schemas:
+            logger.info("- %s" % schema_name)
 
         # Look up all of the relations dbt knows about
         model_relations = set()
@@ -40,43 +56,29 @@ class CompareTask(BaseTask):
                 rel = (node["schema"].lower(), node["alias"].lower())
                 model_relations.add(rel)
 
-        # Look up all of the relations in the DB
-        adapter = get_adapter(self.config)
-        results = adapter.get_catalog(manifest)
-
-        results = [dict(zip(results.column_names, row)) for row in results]
-
-        database_relations = set()
-        for row in results:
-            rel = (row["table_schema"].lower(), row["table_name"].lower())
-            database_relations.add(rel)
-
-        checked_schemas = set([x[0] for x in database_relations])
-
-        logger.info("-" * 40)
-        logger.info("dbt compare reviewed the following schemas:")
-        for schema_name in checked_schemas:
-            logger.info(schema_name)
-        logger.info("-" * 40)
-
         problems = database_relations - model_relations
 
         if len(problems) == 0:
             logger.info(
-                "All clear! There are no relations in the checked schemas that are not defined in dbt models."
+                dbt.ui.printer.green(
+                    "All clear! There are no relations in the checked schemas that are not defined in dbt models."
+                )
             )
         else:
-            logger.info("-" * 40)
             logger.info(
-                "Warning: We found some discrepancies between the database catalog and the dbt models:"
+                dbt.ui.printer.yellow(
+                    "Warning: The following relations do not match any models found in this project:"
+                )
             )
-            logger.info(
-                "This may indicate that you have outdated relations in your warehouse that can be removed."
-            )
-            logger.info("-" * 40)
 
-        for relation in problems:
-            logger.info("DIFFERENCE: %s.%s" % (relation[0], relation[1]))
-        logger.info("-" * 40)
+        problem_relation_list = []  # Get a list of relations to return
 
-        return problems
+        for relation_id in problems:
+            relation = database_relations_map[relation_id]
+            problem_relation_list.append(relation)
+            logger.info("{} {}".format(relation.type.upper(), relation))
+
+        return problem_relation_list
+
+        def interpret_results(self, results):
+            return len(results) == 0
