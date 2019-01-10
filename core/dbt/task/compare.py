@@ -43,7 +43,7 @@ class CompareTask(BaseTask):
 
         logger.info("Comparing local models to the database catalog. Checking schemas:")
         for schema_name in checked_schemas:
-            logger.info("- %s" % schema_name)
+            logger.info("- {}".format(schema_name))
 
         # Look up all of the relations dbt knows about
         model_relations = set()
