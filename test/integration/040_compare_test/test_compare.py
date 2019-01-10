@@ -8,7 +8,7 @@ class TestCompare(DBTIntegrationTest):
         return "config_040"
 
     def unique_schema(self):
-        return super(TestCompare, self).unique_schema().upper()
+        return super(TestCompare, self).unique_schema()
 
     @staticmethod
     def dir(path):
