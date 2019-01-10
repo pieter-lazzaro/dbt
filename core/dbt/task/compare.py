@@ -2,14 +2,11 @@ from __future__ import print_function
 
 from dbt.adapters.factory import get_adapter
 from dbt.logger import GLOBAL_LOGGER as logger
-from dbt.runner import RunManager
 from dbt.node_types import NodeType
-from dbt.node_runners import ModelRunner
 from dbt.utils import is_enabled as check_is_enabled
 
 import dbt.ui.printer
 from dbt.task.base_task import BaseTask
-import dbt.ui.printer
 
 
 class CompareTask(BaseTask):
@@ -37,11 +34,13 @@ class CompareTask(BaseTask):
         database_relations = set()
         database_relations_map = dict()
         for relation in db_relations:
-            relation_id = (relation.schema.lower(), relation.identifier.lower())
+            relation_id = (relation.schema.lower(),
+                           relation.identifier.lower())
             database_relations_map[relation_id] = relation
             database_relations.add(relation_id)
 
-        logger.info("Comparing local models to the database catalog. Checking schemas:")
+        logger.info("Comparing local models to the database catalog. "
+                    "Checking schemas:")
         for schema_name in checked_schemas:
             logger.info("- {}".format(schema_name))
 
@@ -61,13 +60,15 @@ class CompareTask(BaseTask):
         if len(problems) == 0:
             logger.info(
                 dbt.ui.printer.green(
-                    "All clear! There are no relations in the checked schemas that are not defined in dbt models."
+                    "All clear! There are no relations in the checked schemas "
+                    "that are not defined in dbt models."
                 )
             )
         else:
             logger.info(
                 dbt.ui.printer.yellow(
-                    "Warning: The following relations do not match any models found in this project:"
+                    "Warning: The following relations do not match any models "
+                    "found in this project:"
                 )
             )
 

@@ -33,7 +33,9 @@ class TestConfigs(DBTIntegrationTest):
             f.write(model)
 
     def get_created_models(self):
-        relations = self.adapter.list_relations_without_caching(self.unique_schema())
+        relations = self.adapter.list_relations_without_caching(
+                self.unique_schema()
+                )
         created_models = [rel.table.lower() for rel in relations]
 
         return created_models
