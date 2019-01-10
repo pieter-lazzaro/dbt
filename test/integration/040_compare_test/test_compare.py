@@ -2,13 +2,13 @@ from test.integration.base import DBTIntegrationTest, use_profile
 import os
 
 
-class TestConfigs(DBTIntegrationTest):
+class TestCompare(DBTIntegrationTest):
     @property
     def schema(self):
         return "config_040"
 
     def unique_schema(self):
-        return super(TestConfigs, self).unique_schema().upper()
+        return super(TestCompare, self).unique_schema().upper()
 
     @staticmethod
     def dir(path):
