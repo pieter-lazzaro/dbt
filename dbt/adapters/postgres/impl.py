@@ -80,7 +80,7 @@ class PostgresAdapter(dbt.adapters.default.DefaultAdapter):
                 host=credentials.host,
                 password=credentials.password,
                 port=credentials.port,
-                connect_timeout=10,
+                connect_timeout=120,
                 **kwargs)
 
             connection.handle = handle
