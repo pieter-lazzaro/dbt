@@ -105,6 +105,7 @@ class MssqlConnectionManager(SQLConnectionManager):
             handle = pyodbc.connect(
                 driver='{ODBC Driver 17 for SQL Server}',
                 server=credentials.host,
+                database=credentials.database,
                 uid=credentials.user,
                 pwd=credentials.password,
                 timeout=10,

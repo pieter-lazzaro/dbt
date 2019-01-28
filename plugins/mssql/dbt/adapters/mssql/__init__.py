@@ -1,5 +1,6 @@
 from dbt.adapters.mssql.connections import MssqlConnectionManager
 from dbt.adapters.mssql.connections import MssqlCredentials
+from dbt.adapters.mssql.relation import MssqlRelation
 from dbt.adapters.mssql.impl import MssqlAdapter
 
 from dbt.adapters.base import AdapterPlugin

@@ -1,10 +1,9 @@
-import psycopg2
-
 import time
 
 from dbt.adapters.base.meta import available_raw
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.mssql import MssqlConnectionManager
+from dbt.adapters.mssql import MssqlRelation
 import dbt.compat
 import dbt.exceptions
 import agate
@@ -18,6 +17,7 @@ GET_RELATIONS_MACRO_NAME = 'mssql_get_relations'
 
 class MssqlAdapter(SQLAdapter):
     ConnectionManager = MssqlConnectionManager
+    Relation = MssqlRelation
 
     @classmethod
     def date_function(cls):

@@ -224,27 +224,28 @@ END
 {% endmacro %}
 
 {% macro mssql__rename_relation(from_relation, to_relation) -%}
-  {% set source_name = adapter.quote_as_configured(from_relation.identifier, 'identifier') %}
+  {% set to_identifier = to_relation.identifier %}
+  {% set to_schema = adapter.quote_as_configured(to_relation.schema, 'schema') %}
+  {% set from_schema = adapter.quote_as_configured(from_relation.schema, 'schema') %}
   {% call statement('rename_relation') -%}
-    EXEC sp_rename '{{ source_name }}', '{{ to_relation }}';  
+    EXEC sp_rename '{{ from_relation }}', '{{ to_identifier }}';
+    {% if from_relation.schema != to_relation.schema: %}}
+    alter schema {{ from_schema }} transfer {{ to_schema }};
+    {% endif %}
   {%- endcall %}
 {% endmacro %}
 
 
-{% macro default__create_table_as(temporary, relation, sql) -%}
-  create {% if temporary: -%}temporary{%- endif %} table
-    {{ relation.include(database=(not temporary), schema=(not temporary)) }}
-  as (
+{% macro mssql__create_table_as(temporary, relation, sql) -%}
+  {# TODO: handle temporary tables #}
+  SELECT * INTO {{ relation.include(database=(not temporary), schema=(not temporary)) }}
+  FROM (
     {{ sql }}
-  );
+  ) as create_table_as;
 {% endmacro %}
 
 
-{% macro create_view_as(relation, sql) -%}
-  {{ adapter_macro('create_view_as', relation, sql) }}
-{%- endmacro %}
-
-{% macro default__create_view_as(relation, sql) -%}
+{% macro mssql__create_view_as(relation, sql) -%}
   create view {{ relation }} as (
     {{ sql }}
   );
