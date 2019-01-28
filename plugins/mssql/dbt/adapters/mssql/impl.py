@@ -13,7 +13,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 
 
 # note that this isn't an adapter macro, so just a single underscore
-GET_RELATIONS_MACRO_NAME = 'postgres_get_relations'
+GET_RELATIONS_MACRO_NAME = 'mssql_get_relations'
 
 
 class MssqlAdapter(SQLAdapter):
@@ -25,7 +25,7 @@ class MssqlAdapter(SQLAdapter):
 
     @classmethod
     def convert_text_type(cls, agate_table, col_idx):
-        return "text"
+        return "ntext"
 
     @classmethod
     def convert_number_type(cls, agate_table, col_idx):
@@ -51,9 +51,13 @@ class MssqlAdapter(SQLAdapter):
     def convert_time_type(cls, agate_table, col_idx):
         return "time"
 
+    @classmethod
+    def quote(cls, identifier):
+        return '[{}]'.format(identifier)
+
     @available_raw
     def verify_database(self, database):
-        database = database.strip('"')
+        database = database.strip('[]')
         expected = self.config.credentials.database
         if database != expected:
             raise dbt.exceptions.NotImplementedException(

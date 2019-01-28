@@ -1,3 +1,5 @@
+import time
+
 from contextlib import contextmanager
 
 import pyodbc
@@ -90,7 +92,6 @@ class MssqlConnectionManager(SQLConnectionManager):
             logger.debug('Connection is already open, skipping open.')
             return connection
 
-        base_credentials = connection.credentials
         credentials = cls.get_credentials(connection.credentials.incorporate())
         kwargs = {}
         keepalives_idle = credentials.get('keepalives_idle',
@@ -103,7 +104,7 @@ class MssqlConnectionManager(SQLConnectionManager):
         try:
             handle = pyodbc.connect(
                 driver='{ODBC Driver 17 for SQL Server}',
-                server=credentials.server,
+                server=credentials.host,
                 uid=credentials.user,
                 pwd=credentials.password,
                 timeout=10,
@@ -162,3 +163,34 @@ class MssqlConnectionManager(SQLConnectionManager):
     def get_status(cls, cursor):
         # ODBC doesn't have a status attribute
         return 'OK'
+    
+    # implmenting here to fix pyodbc's handling of bindings
+    def add_query(self, sql, name=None, auto_begin=True, bindings=None,
+                  abridge_sql_log=False):
+        connection = self.get(name)
+        connection_name = connection.name
+
+        if auto_begin and connection.transaction_open is False:
+            self.begin(connection_name)
+
+        logger.debug('Using {} connection "{}".'
+                     .format(self.TYPE, connection_name))
+
+        with self.exception_handler(sql, connection_name):
+            if abridge_sql_log:
+                logger.debug('On %s: %s....', connection_name, sql[0:512])
+            else:
+                logger.debug('On %s: %s Bindings: %s', connection_name, sql, bindings)
+            pre = time.time()
+
+            cursor = connection.handle.cursor()
+
+            if bindings is None:
+                cursor.execute(sql)
+            else:
+                cursor.execute(sql, bindings)
+
+            logger.debug("SQL status: %s in %0.2f seconds",
+                         self.get_status(cursor), (time.time() - pre))
+
+            return connection, cursor

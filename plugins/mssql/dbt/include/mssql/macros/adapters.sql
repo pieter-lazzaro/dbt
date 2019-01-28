@@ -1,10 +1,11 @@
 
 {% macro mssql__create_schema(database_name, schema_name) -%}
+  {% set schema = schema_name.strip('[]') %}
   {% if database_name -%}
     {{ adapter.verify_database(database_name) }}
   {%- endif -%}
   {%- call statement('create_schema') -%}
-    if not exists (select name from sys.schemas where name = '{{ schema_name }}') 
+    if not exists (select name from sys.schemas where name = '{{ schema }}') 
     begin
       exec sp_executesql N'create schema {{ schema_name }}'
     end
@@ -205,4 +206,46 @@ END
   {% call statement('check_schema_exists', fetch_result=True, auto_begin=False) %}
     select count(*) from sys.schemas where name = '{{ schema }}'
   {% endcall %}
+{% endmacro %}
+
+
+{% macro mssql__alter_column_type(relation, column_name, new_column_type) -%}
+  {% call statement('alter_column_type') %}
+    alter table {{ relation }} alter column {{ column_name }} {{ new_column_type }};
+  {% endcall %}
+
+{% endmacro %}
+
+
+{% macro mssql__drop_relation(relation) -%}
+  {% call statement('drop_relation', auto_begin=False) -%}
+    drop {{ relation.type }} if exists {{ relation }}
+  {%- endcall %}
+{% endmacro %}
+
+{% macro mssql__rename_relation(from_relation, to_relation) -%}
+  {% set source_name = adapter.quote_as_configured(from_relation.identifier, 'identifier') %}
+  {% call statement('rename_relation') -%}
+    EXEC sp_rename '{{ source_name }}', '{{ to_relation }}';  
+  {%- endcall %}
+{% endmacro %}
+
+
+{% macro default__create_table_as(temporary, relation, sql) -%}
+  create {% if temporary: -%}temporary{%- endif %} table
+    {{ relation.include(database=(not temporary), schema=(not temporary)) }}
+  as (
+    {{ sql }}
+  );
+{% endmacro %}
+
+
+{% macro create_view_as(relation, sql) -%}
+  {{ adapter_macro('create_view_as', relation, sql) }}
+{%- endmacro %}
+
+{% macro default__create_view_as(relation, sql) -%}
+  create view {{ relation }} as (
+    {{ sql }}
+  );
 {% endmacro %}
