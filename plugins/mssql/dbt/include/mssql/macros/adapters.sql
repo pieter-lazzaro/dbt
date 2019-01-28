@@ -246,7 +246,7 @@ END
 
 
 {% macro mssql__create_view_as(relation, sql) -%}
-  create view {{ relation }} as (
+  create view {{ relation }} as 
     {{ sql }}
-  );
+  ;
 {% endmacro %}
