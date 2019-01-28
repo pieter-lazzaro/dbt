@@ -125,25 +125,25 @@ class MssqlConnectionManager(SQLConnectionManager):
         return connection
 
     def cancel(self, connection):
-        # there is no way to cancel connections, only queries can be cancelled if
-        # you have the cursor. I am not sure if it is worth wrapping the connection
-        # object or not
+        # there is no way to cancel connections, only queries can be cancelled
+        # if you have the cursor. I am not sure if it is worth wrapping the
+        # connection object or not
         pass
 
-    def begin(self, name): 
-        # No need to start transactions: 
-        # https://github.com/mkleehammer/pyodbc/wiki/Database-Transaction-Management
+    def begin(self, name):
+        # No need to start transactions:
+        # https://github.com/mkleehammer/pyodbc/wiki/Database-Transaction-Management # noqa
         pass
-    
+
     def commit(self, connection):
-        
+
         if dbt.flags.STRICT_MODE:
             assert isinstance(connection, Connection)
 
         connection = self.get(connection.name)
 
         logger.debug('On {}: COMMIT'.format(connection.name))
-        
+
         try:
             connection.handle.commit()
         except pyodbc.Error as e:

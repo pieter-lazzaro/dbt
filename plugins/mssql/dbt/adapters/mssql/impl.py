@@ -22,7 +22,7 @@ class MssqlAdapter(SQLAdapter):
     @classmethod
     def date_function(cls):
         return 'getdate()'
-    
+
     @classmethod
     def convert_text_type(cls, agate_table, col_idx):
         return "text"
@@ -62,4 +62,3 @@ class MssqlAdapter(SQLAdapter):
             )
         # return an empty string on success so macros can call this
         return ''
-
