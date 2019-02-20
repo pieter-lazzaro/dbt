@@ -219,7 +219,9 @@ END
 
 {% macro mssql__drop_relation(relation) -%}
   {% call statement('drop_relation', auto_begin=False) -%}
-    drop {{ relation.type }} if exists {{ relation }}
+    if object_id('{{ relation }}') is not null begin
+      drop {{ relation.type }} {{ relation }}
+    end
   {%- endcall %}
 {% endmacro %}
 
@@ -238,9 +240,12 @@ END
 
 {% macro mssql__create_table_as(temporary, relation, sql) -%}
   {# TODO: handle temporary tables #}
+  {% set ctes = adapter.extract_ctes(sql) %}
+  {% set query = adapter.extract_query(sql) %}
+  {{ ctes }}
   SELECT * INTO {{ relation.include(database=(not temporary), schema=(not temporary)) }}
   FROM (
-    {{ sql }}
+    {{ query }}
   ) as create_table_as;
 {% endmacro %}
 
